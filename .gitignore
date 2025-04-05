@@ -64,3 +64,5 @@ serviceAccountKey.json
 
 uploads/*
 !uploads/.gitkeep
+
+.vscode/
