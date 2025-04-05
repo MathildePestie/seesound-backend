@@ -13,10 +13,10 @@ const uploadRoutes = require("./routes/upload");
 const app = express();
 
 app.use(cors({
-    origin: "http://localhost:3001",
+    origin: ["http://localhost:3001", "https://seesound-frontend.vercel.app"],
     methods: ["POST", "GET"],
     allowedHeaders: ["Content-Type", "Authorization"]
-}));
+  }));
 
 app.use(logger('dev'));
 app.use(express.json());
