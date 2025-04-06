@@ -28,6 +28,8 @@ router.post(
   upload.fields([{ name: "audio" }, { name: "video" }]),
   async (req, res) => {
     try {
+      console.log("🎧 Fichiers reçus :", req.files);
+      console.log("📨 Corps reçu :", req.body);
       const { title, artist, date_of_creation } = req.body;
       const token = req.headers.authorization?.split(" ")[1];
       console.log("📦 Token reçu :", token);
@@ -39,6 +41,11 @@ router.post(
       const user = await User.findOne({ token });
       if (!user) {
         return res.status(401).json({ error: "Utilisateur non autorisé" });
+      }
+
+      console.log("🧪 req.files:", req.files);
+      if (!req.files || !req.files.video || !req.files.video[0]) {
+        return res.status(400).json({ error: "Fichier vidéo manquant" });
       }
 
       const videoFilePath = req.files.video[0].path;
@@ -63,9 +70,12 @@ router.post(
         date_of_creation: new Date(date_of_creation),
         mp4Url: publicVideoUrl,
         username: user.username,
-      };      
+      };
 
-      console.log("Suppression du fichier vidéo à l'emplacement :", videoFilePath);
+      console.log(
+        "Suppression du fichier vidéo à l'emplacement :",
+        videoFilePath
+      );
       fs.unlinkSync(videoFilePath);
       console.log("Ajout de la musique à l'utilisateur :", newMusic);
 
@@ -79,7 +89,9 @@ router.post(
     } catch (error) {
       console.error("❌ Erreur:", error.message);
       console.error("❌ Stack:", error.stack);
-      res.status(500).json({ error: "Erreur serveur lors de l'enregistrement" });
+      res
+        .status(500)
+        .json({ error: "Erreur serveur lors de l'enregistrement" });
     }
   }
 );
@@ -87,7 +99,8 @@ router.post(
 router.get("/my-visuals", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ error: "Token manquant ou invalide" });
+    if (!token)
+      return res.status(401).json({ error: "Token manquant ou invalide" });
 
     const user = await User.findOne({ token });
     if (!user) return res.status(401).json({ error: "Utilisateur non trouvé" });
@@ -152,8 +165,8 @@ router.get("/all-visuals", async (req, res) => {
     const allUsers = await User.find();
 
     // On extrait toutes les musiques dans un seul tableau
-    const allVisuals = allUsers.flatMap(user => {
-      return user.music.map(m => ({
+    const allVisuals = allUsers.flatMap((user) => {
+      return user.music.map((m) => ({
         ...m.toObject(),
         username: user.username, // on ajoute l'auteur
       }));
@@ -161,7 +174,10 @@ router.get("/all-visuals", async (req, res) => {
 
     res.json({ visuals: allVisuals.reverse() }); // reverse pour la plus récente d'abord
   } catch (error) {
-    console.error("Erreur lors de la récupération de toutes les visualisations :", error);
+    console.error(
+      "Erreur lors de la récupération de toutes les visualisations :",
+      error
+    );
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
@@ -187,17 +203,23 @@ router.post("/delete-visual", async (req, res) => {
 
     if (filename) {
       const file = bucket.file(`videos/${filename}`);
-      await file.delete().then(() => {
-        console.log(`✅ Vidéo supprimée du bucket : videos/${filename}`);
-      }).catch((err) => {
-        console.warn("⚠️ Impossible de supprimer la vidéo du bucket :", err.message);
-      });
+      await file
+        .delete()
+        .then(() => {
+          console.log(`✅ Vidéo supprimée du bucket : videos/${filename}`);
+        })
+        .catch((err) => {
+          console.warn(
+            "⚠️ Impossible de supprimer la vidéo du bucket :",
+            err.message
+          );
+        });
     } else {
       console.warn("⚠️ Aucun nom de fichier trouvé dans l'URL :", videoUrl);
     }
 
     // Suppression de la vidéo dans la base utilisateur
-    user.music = user.music.filter(m => m.mp4Url !== videoUrl);
+    user.music = user.music.filter((m) => m.mp4Url !== videoUrl);
     await user.save();
 
     res.json({ message: "Visualisation supprimée avec succès" });

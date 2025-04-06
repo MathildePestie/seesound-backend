@@ -14,5 +14,10 @@ admin.initializeApp({
 
 const bucket = admin.storage().bucket();
 console.log("📦 Bucket utilisé :", bucket.name);
+console.log("🔥 Config Firebase :");
+console.log("project_id:", process.env.FIREBASE_PROJECT_ID);
+console.log("client_email:", process.env.FIREBASE_CLIENT_EMAIL);
+console.log("private_key starts with:", process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30));
+
 
 module.exports = bucket;
