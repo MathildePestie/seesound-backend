@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); // Garde seulement celle-ci
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
@@ -11,8 +11,6 @@ const usersRouter = require('./routes/users');
 const uploadRoutes = require("./routes/upload");
 
 const app = express();
-
-const cors = require("cors");
 
 const allowedOrigins = [
   "http://localhost:3001",
