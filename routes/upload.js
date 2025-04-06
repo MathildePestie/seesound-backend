@@ -26,6 +26,9 @@ console.log("📦 Bucket utilisé :", bucket.name);
 router.post(
   "/save-visual",
   upload.fields([{ name: "audio" }, { name: "video" }]),
+  console.log("🎧 Fichiers reçus :", req.files),
+  
+
   async (req, res) => {
     try {
       const { title, artist, date_of_creation } = req.body;
@@ -43,6 +46,10 @@ router.post(
 
       const videoFilePath = req.files.video[0].path;
       const videoFilename = req.files.video[0].filename;
+
+      if (!req.files || !req.files.video || !req.files.video[0]) {
+        return res.status(400).json({ error: "Fichier vidéo manquant" });
+      }
 
       await bucket.upload(videoFilePath, {
         destination: `videos/${videoFilename}`,
@@ -69,7 +76,8 @@ router.post(
         mp4Url: publicVideoUrl,
       });
     } catch (error) {
-      console.error("Erreur lors de l'enregistrement de la visualisation:", error);
+      console.error("❌ Erreur:", error.message);
+      console.error("❌ Stack:", error.stack);
       res.status(500).json({ error: "Erreur serveur lors de l'enregistrement" });
     }
   }
