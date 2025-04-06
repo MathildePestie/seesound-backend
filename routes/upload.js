@@ -51,6 +51,7 @@ router.post(
         return res.status(400).json({ error: "Fichier vidéo manquant" });
       }
 
+      console.log("📂 Chemin de la vidéo :", videoFilePath);
       await bucket.upload(videoFilePath, {
         destination: `videos/${videoFilename}`,
         public: true,
@@ -67,7 +68,10 @@ router.post(
         username: user.username,
       };      
 
+      console.log("Suppression du fichier vidéo à l'emplacement :", videoFilePath);
       fs.unlinkSync(videoFilePath);
+      console.log("Ajout de la musique à l'utilisateur :", newMusic);
+
       user.music.push(newMusic);
       await user.save();
 

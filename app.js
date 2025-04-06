@@ -21,6 +21,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
+    console.log("Origine requête :", origin); 
     // Autoriser les requêtes sans origine (type Postman / Render healthchecks)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
