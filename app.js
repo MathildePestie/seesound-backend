@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors'); // Garde seulement celle-ci
+const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
@@ -18,18 +18,13 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    console.log("Origine requête :", origin); 
-    // Autoriser les requêtes sans origine (type Postman / Render healthchecks)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
+
+app.options("*", cors());
 
 app.use(logger('dev'));
 app.use(express.json());
