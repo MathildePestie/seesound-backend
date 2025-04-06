@@ -13,10 +13,12 @@ const serviceAccount = {
 };
 const { capitalizeFirstLetter } = require("../utils/format");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: `${process.env.FIREBASE_PROJECT_ID}.appspot.com`,
-});
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    storageBucket: `${process.env.FIREBASE_PROJECT_ID}.appspot.com`,
+  });
+}
 
 const bucket = admin.storage().bucket();
 console.log("📦 Bucket utilisé :", bucket.name);
