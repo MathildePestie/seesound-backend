@@ -4,16 +4,9 @@ const upload = require("../utils/multer");
 const fs = require("fs");
 const path = require("path");
 const User = require("../models/users");
-const admin = require("firebase-admin");
-const serviceAccount = {
-  type: "service_account",
-  project_id: process.env.FIREBASE_PROJECT_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  client_email: process.env.FIREBASE_CLIENT_EMAIL,
-};
 const { capitalizeFirstLetter } = require("../utils/format");
 const bucket = require("../utils/firebase");
-console.log("📦 Bucket utilisé :", bucket.name);
+
 
 router.post(
   "/save-visual",
