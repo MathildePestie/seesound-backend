@@ -26,9 +26,6 @@ console.log("📦 Bucket utilisé :", bucket.name);
 router.post(
   "/save-visual",
   upload.fields([{ name: "audio" }, { name: "video" }]),
-  console.log("🎧 Fichiers reçus :", req.files),
-  
-
   async (req, res) => {
     try {
       const { title, artist, date_of_creation } = req.body;
