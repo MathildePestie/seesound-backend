@@ -5,8 +5,14 @@ const fs = require("fs");
 const path = require("path");
 const User = require("../models/users");
 const { capitalizeFirstLetter } = require("../utils/format");
+const cloudinary = require("cloudinary").v2; 
 const bucket = require("../utils/firebase");
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 router.post(
   "/save-visual",
@@ -14,10 +20,8 @@ router.post(
   async (req, res) => {
     try {
       console.log("🎧 Fichiers reçus :", req.files);
-      console.log("📨 Corps reçu :", req.body);
       const { title, artist, date_of_creation } = req.body;
       const token = req.headers.authorization?.split(" ")[1];
-      console.log("📦 Token reçu :", token);
 
       if (!token) {
         return res.status(401).json({ error: "Token manquant ou invalide" });
@@ -28,44 +32,40 @@ router.post(
         return res.status(401).json({ error: "Utilisateur non autorisé" });
       }
 
-      console.log("🧪 req.files:", req.files);
       if (!req.files || !req.files.video || !req.files.video[0]) {
         return res.status(400).json({ error: "Fichier vidéo manquant" });
       }
 
       const videoFilePath = req.files.video[0].path;
-      const videoFilename = req.files.video[0].filename;
 
-      if (!req.files || !req.files.video || !req.files.video[0]) {
-        return res.status(400).json({ error: "Fichier vidéo manquant" });
-      }
-
-      console.log("📂 Chemin de la vidéo :", videoFilePath);
-      await bucket.upload(videoFilePath, {
-        destination: `videos/${videoFilename}`,
-        public: true,
+      // Téléchargement de la vidéo sur Cloudinary
+      const result = await cloudinary.uploader.upload(videoFilePath, {
+        resource_type: "video", // Indique qu'il s'agit d'une vidéo
+        public_id: `seesound_videos/${Date.now()}`, // Utilisation d'un ID unique pour chaque vidéo
+        overwrite: true,
+        tags: ["visualization"],  // Tag pour organiser les vidéos
         metadata: { contentType: "video/mp4" },
       });
 
-      const publicVideoUrl = `https://storage.googleapis.com/${bucket.name}/videos/${videoFilename}`;
+      const publicVideoUrl = result.secure_url;  // URL publique générée par Cloudinary
 
+      // Créez le nouvel objet de musique avec le lien de la vidéo Cloudinary
       const newMusic = {
-        title: capitalizeFirstLetter(title),
-        artist: capitalizeFirstLetter(artist),
+        title,
+        artist,
         date_of_creation: new Date(date_of_creation),
-        mp4Url: publicVideoUrl,
+        mp4Url: publicVideoUrl,  // URL publique Cloudinary
         username: user.username,
       };
 
-      console.log(
-        "Suppression du fichier vidéo à l'emplacement :",
-        videoFilePath
-      );
-      fs.unlinkSync(videoFilePath);
       console.log("Ajout de la musique à l'utilisateur :", newMusic);
 
+      // Sauvegarde dans la base de données
       user.music.push(newMusic);
       await user.save();
+
+      // Suppression du fichier vidéo local
+      fs.unlinkSync(videoFilePath);
 
       res.json({
         message: "Visualisation sauvegardée avec succès",
@@ -73,13 +73,84 @@ router.post(
       });
     } catch (error) {
       console.error("❌ Erreur:", error.message);
-      console.error("❌ Stack:", error.stack);
-      res
-        .status(500)
-        .json({ error: "Erreur serveur lors de l'enregistrement" });
+      res.status(500).json({ error: "Erreur serveur lors de l'enregistrement" });
     }
   }
 );
+
+
+// router.post(
+//   "/save-visual",
+//   upload.fields([{ name: "audio" }, { name: "video" }]),
+//   async (req, res) => {
+//     try {
+//       console.log("🎧 Fichiers reçus :", req.files);
+//       console.log("📨 Corps reçu :", req.body);
+//       const { title, artist, date_of_creation } = req.body;
+//       const token = req.headers.authorization?.split(" ")[1];
+//       console.log("📦 Token reçu :", token);
+
+//       if (!token) {
+//         return res.status(401).json({ error: "Token manquant ou invalide" });
+//       }
+
+//       const user = await User.findOne({ token });
+//       if (!user) {
+//         return res.status(401).json({ error: "Utilisateur non autorisé" });
+//       }
+
+//       console.log("🧪 req.files:", req.files);
+//       if (!req.files || !req.files.video || !req.files.video[0]) {
+//         return res.status(400).json({ error: "Fichier vidéo manquant" });
+//       }
+
+//       const videoFilePath = req.files.video[0].path;
+//       const videoFilename = req.files.video[0].filename;
+
+//       if (!req.files || !req.files.video || !req.files.video[0]) {
+//         return res.status(400).json({ error: "Fichier vidéo manquant" });
+//       }
+
+//       console.log("📂 Chemin de la vidéo :", videoFilePath);
+//       await bucket.upload(videoFilePath, {
+//         destination: `videos/${videoFilename}`,
+//         public: true,
+//         metadata: { contentType: "video/mp4" },
+//       });
+
+//       const publicVideoUrl = `https://storage.googleapis.com/${bucket.name}/videos/${videoFilename}`;
+
+//       const newMusic = {
+//         title: capitalizeFirstLetter(title),
+//         artist: capitalizeFirstLetter(artist),
+//         date_of_creation: new Date(date_of_creation),
+//         mp4Url: publicVideoUrl,
+//         username: user.username,
+//       };
+
+//       console.log(
+//         "Suppression du fichier vidéo à l'emplacement :",
+//         videoFilePath
+//       );
+//       fs.unlinkSync(videoFilePath);
+//       console.log("Ajout de la musique à l'utilisateur :", newMusic);
+
+//       user.music.push(newMusic);
+//       await user.save();
+
+//       res.json({
+//         message: "Visualisation sauvegardée avec succès",
+//         mp4Url: publicVideoUrl,
+//       });
+//     } catch (error) {
+//       console.error("❌ Erreur:", error.message);
+//       console.error("❌ Stack:", error.stack);
+//       res
+//         .status(500)
+//         .json({ error: "Erreur serveur lors de l'enregistrement" });
+//     }
+//   }
+// );
 
 router.get("/my-visuals", async (req, res) => {
   try {
