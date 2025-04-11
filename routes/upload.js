@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const User = require("../models/users");
 const { capitalizeFirstLetter } = require("../utils/format");
-const cloudinary = require("cloudinary").v2; 
+const cloudinary = require("cloudinary").v2;
 const bucket = require("../utils/firebase");
 
 cloudinary.config({
@@ -35,26 +35,38 @@ router.post(
       if (!req.files || !req.files.video || !req.files.video[0]) {
         return res.status(400).json({ error: "Fichier vidéo manquant" });
       }
+      
+
+      const validFormats = [".mp4", ".mov", ".avi"];
+      const fileExtension = path.extname(videoFilePath);
+
+      if (!validFormats.includes(fileExtension)) {
+        return res.status(400).json({ error: "Format de vidéo non supporté" });
+      }
 
       const videoFilePath = req.files.video[0].path;
+
+      console.log("📂 Chemin du fichier vidéo :", videoFilePath);
 
       // Téléchargement de la vidéo sur Cloudinary
       const result = await cloudinary.uploader.upload(videoFilePath, {
         resource_type: "video", // Indique qu'il s'agit d'une vidéo
         public_id: `seesound_videos/${Date.now()}`, // Utilisation d'un ID unique pour chaque vidéo
         overwrite: true,
-        tags: ["visualization"],  // Tag pour organiser les vidéos
+        tags: ["visualization"], // Tag pour organiser les vidéos
         metadata: { contentType: "video/mp4" },
       });
 
-      const publicVideoUrl = result.secure_url;  // URL publique générée par Cloudinary
+      console.log("Résultat Cloudinary:", result);
+
+      const publicVideoUrl = result.secure_url; // URL publique générée par Cloudinary
 
       // Créez le nouvel objet de musique avec le lien de la vidéo Cloudinary
       const newMusic = {
         title,
         artist,
         date_of_creation: new Date(date_of_creation),
-        mp4Url: publicVideoUrl,  // URL publique Cloudinary
+        mp4Url: publicVideoUrl, // URL publique Cloudinary
         username: user.username,
       };
 
@@ -72,12 +84,11 @@ router.post(
         mp4Url: publicVideoUrl,
       });
     } catch (error) {
-      console.error("❌ Erreur:", error.message);
+      console.error("Erreur lors du téléchargement sur Cloudinary:", error);
       res.status(500).json({ error: "Erreur serveur lors de l'enregistrement" });
     }
   }
 );
-
 
 // router.post(
 //   "/save-visual",

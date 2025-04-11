@@ -13,8 +13,8 @@ const uploadRoutes = require("./routes/upload");
 const app = express();
 
 const allowedOrigins = [
-  "http://localhost:3001",
-  "https://seesound-frontend.vercel.app"
+  "http://localhost:3001",   // Localhost pour développement
+  "https://seesound-frontend.vercel.app", // URL de votre frontend déployé
 ];
 
 app.use(cors({
@@ -24,6 +24,7 @@ app.use(cors({
   credentials: true,
 }));
 
+// Réponse explicite aux requêtes OPTIONS pour tous les points de terminaison
 app.options("*", cors());
 
 app.use(logger('dev'));
