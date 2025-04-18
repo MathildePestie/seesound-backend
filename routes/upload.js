@@ -7,7 +7,6 @@ const User = require("../models/users");
 const { capitalizeFirstLetter } = require("../utils/format");
 const bucket = require("../utils/firebase");
 
-
 router.post(
   "/save-visual",
   upload.fields([{ name: "audio" }, { name: "video" }]),
@@ -18,6 +17,12 @@ router.post(
       const { title, artist, date_of_creation } = req.body;
       const token = req.headers.authorization?.split(" ")[1];
       console.log("📦 Token reçu :", token);
+      const [day, month, year] = date_of_creation.split("/");
+      let formattedDate = new Date();
+      if (date_of_creation?.includes("/")) {
+        const [day, month, year] = date_of_creation.split("/");
+        formattedDate = new Date(`${year}-${month}-${day}`);
+      }
 
       if (!token) {
         return res.status(401).json({ error: "Token manquant ou invalide" });
@@ -52,7 +57,7 @@ router.post(
       const newMusic = {
         title: capitalizeFirstLetter(title),
         artist: capitalizeFirstLetter(artist),
-        date_of_creation: new Date(date_of_creation),
+        date_of_creation: formattedDate,
         mp4Url: publicVideoUrl,
         username: user.username,
         likes: [],
