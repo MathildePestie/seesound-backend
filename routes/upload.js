@@ -55,6 +55,7 @@ router.post(
         date_of_creation: new Date(date_of_creation),
         mp4Url: publicVideoUrl,
         username: user.username,
+        likes: [],
       };
 
       console.log(
